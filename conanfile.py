@@ -15,8 +15,10 @@ class CoreMessages(ConanFile):
            "revision": "auto"}
 
     def requirements(self):
-        # TODO: protobuf...
-        pass
+        self.requires("protobuf/3.6.1@bincrafters/stable")
+
+    def build_requirements(self):
+        self.build_requires("protoc_installer/3.6.1@bincrafters/stable")
 
     def build(self):
         cmake = CMake(self)
