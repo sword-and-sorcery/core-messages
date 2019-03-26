@@ -9,7 +9,7 @@ set(SOURCES src/board_status.cpp)
 
 add_library(messages ${SOURCES})
 set_target_properties(messages PROPERTIES CXX_STANDARD 17)
-target_link_libraries(messages PUBLIC CONAN_PKG::rapidxml CONAN_PKG::boost)
+target_link_libraries(messages PUBLIC CONAN_PKG::protobuf)
 
 target_include_directories(
     messages PUBLIC
@@ -24,8 +24,8 @@ install(
 install(
     EXPORT messages-config
     NAMESPACE messages::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/messages)
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake)
 
 install(
     DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include/
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/messages)
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
