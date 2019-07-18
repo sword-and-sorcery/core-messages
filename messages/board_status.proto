@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+import "messages/layer.proto";
+
+package sword_and_sorcery;
+
+message BoardStatus {
+    string game_id = 1;
+
+    repeated Layer layers = 2;
+}
