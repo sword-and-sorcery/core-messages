@@ -24,8 +24,9 @@ find_package(Protobuf REQUIRED)  # TODO: NO_CMAKE_PACKAGE_REGISTRY
 # Target
 # add_library(messages ${SOURCES} ${PROTO_FILES})
 # add_dependencies(messages protobuf_generate_cpp)
-file(GLOB SOURCES messages/*.pb.h messages/*.pb.cc)
-add_library(messages ${SOURCES})
+file(GLOB SOURCES messages/*.pb.cc)
+file(GLOB HEADERS messages/*.pb.h)
+add_library(messages ${SOURCES} ${HEADERS})
 set_target_properties(messages PROPERTIES CXX_STANDARD 17)
 target_link_libraries(messages PUBLIC CONAN_PKG::protobuf)
 target_include_directories(messages
@@ -41,3 +42,12 @@ target_include_directories(messages
 #     # GCC or Clang
 #     target_compile_options(messages PUBLIC -include ${CMAKE_CURRENT_BINARY_DIR}/include/messages_api.h)
 # endif()
+
+
+install(TARGETS messages
+        RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+install(FILES ${HEADERS}
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/messages
+        PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ)

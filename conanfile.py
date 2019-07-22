@@ -15,6 +15,8 @@ class CoreMessages(ConanFile):
            "url": "auto",
            "revision": "auto"}
 
+    exports = "messages/*.proto"
+
     def requirements(self):
         self.requires("protobuf/3.6.1@bincrafters/stable")
 
@@ -23,11 +25,14 @@ class CoreMessages(ConanFile):
 
     def source(self):
         # Generate protobuf messages
-        message_folder = os.path.join(os.path.dirname(__file__), "messages")
-        self.output.info("message_folder: {}".format(message_folder))
-        messages = [os.path.join(message_folder, it) for it in os.listdir(message_folder) if it.endswith(".proto")]
-        command = "protoc --proto_path={}".format(message_folder)
-        command += " --cpp_out={}".format(message_folder)
+        input_message_folder = os.path.join(os.path.dirname(__file__), "messages")
+        output_message_folder = os.path.join(self.source_folder, "messages")
+        self.output.info("input_message_folder: {}".format(input_message_folder))
+        self.output.info("output_message_folder: {}".format(output_message_folder))
+
+        messages = [os.path.join(input_message_folder, it) for it in os.listdir(input_message_folder) if it.endswith(".proto")]
+        command = "protoc --proto_path={}".format(input_message_folder)
+        command += " --cpp_out={}".format(output_message_folder)
         command += " {}".format(" ".join(messages))
         self.run(command)
 
@@ -36,6 +41,9 @@ class CoreMessages(ConanFile):
         cmake.configure()
         cmake.build()
         cmake.install()
+
+    def package(self):
+        self.copy("LICENSE", dst="licenses")
 
     def package_info(self):
         self.cpp_info.libs = ["messages",]
