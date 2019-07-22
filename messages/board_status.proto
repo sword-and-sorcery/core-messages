@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-import "messages/layer.proto";
+import "layer.proto";
 
 package sword_and_sorcery;
 
