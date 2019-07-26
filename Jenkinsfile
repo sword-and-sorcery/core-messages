@@ -13,7 +13,6 @@ node {
         }
 
         stage("Get dependencies and create app") {
-            //client.run(command: "remote remove conan-center" )
             String createCommand = "create . sword/sorcery"
             client.run(command: createCommand)
         }
