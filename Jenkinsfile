@@ -19,6 +19,9 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
                 def buildInfo = client.run(command: uploadCommand)
                 // server.publishBuildInfo buildInfo
                 // TODO: We need to join the buildInfo of these jobs...
+            }
+
+            stage("Stash build info") {
                 stash name: "bi-${docker_image}".replaceAll('/','-'), includes: client.getLogFilePath()
             }
         }
