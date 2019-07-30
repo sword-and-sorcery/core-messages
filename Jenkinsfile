@@ -22,8 +22,9 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
             }
 
             stage("Stash build info") {
-                echo "Stash ${client.getLogFilePath()}"
-                stash name: "bi-${docker_image}".replaceAll('/','-'), includes: client.getLogFilePath()
+                def stash_name = "bi-${docker_image}".replaceAll('/','-')
+                echo "Stash '${stash_name}' -> '${client.getLogFilePath()}''"
+                stash name: stash_name, includes: client.getLogFilePath()
             }
         }
     }
@@ -49,8 +50,9 @@ node {
 
     stage("Retrieve build info") {
         docker_images.each { docker_image ->
-            echo "docker_image: ${docker_image}"
-            unstash "bi-${docker_image}".replaceAll('/','-')
+            def stash_name = "bi-${docker_image}".replaceAll('/','-')
+            echo "Unstash '${stash_name}'"
+            unstash stash_name
         }
     }
 }
