@@ -9,7 +9,7 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
             stage("${docker_image}") {
                 echo 'Running in ${docker_image}'
             }
-            
+
             stage("Get project") {
                 checkout scm
             }
@@ -21,7 +21,8 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
             stage("Upload packages") {
                 String uploadCommand = "upload core-messages* --all -r ${remoteName} --confirm"
                 def buildInfo = client.run(command: uploadCommand)
-                server.publishBuildInfo buildInfo
+                // server.publishBuildInfo buildInfo
+                // TODO: We need to join the buildInfo of these jobs...
             }
         }
     }
