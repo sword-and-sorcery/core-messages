@@ -35,7 +35,9 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
                     } else {
                         echo 'No////'
                     }
-                    stash name: stash_name, includes: "${client.getLogFilePath()}"
+                    dir(client.getUserPath()) {
+                        stash name: stash_name, includes: "conan_log.log"
+                    }
                 }
             }
         }
