@@ -22,6 +22,7 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
             }
 
             stage("Stash build info") {
+                echo "Stash ${client.getLogFilePath()}"
                 stash name: "bi-${docker_image}".replaceAll('/','-'), includes: client.getLogFilePath()
             }
         }
