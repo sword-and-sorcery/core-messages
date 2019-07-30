@@ -57,20 +57,22 @@ node {
     }
 
     stage("Retrieve build info") {
-        def server = Artifactory.server artifactory_name
-        def client = Artifactory.newConanClient()
-        def buildInfo = client.run(command: '--version')
+        docker.image("conanio/gcc8").inside("--net=docker_jenkins_artifactory") {
+            def server = Artifactory.server artifactory_name
+            def client = Artifactory.newConanClient()
+            def buildInfo = client.run(command: '--version')
 
-        docker_images.each { docker_image ->
-            def stash_name = get_stash_name(docker_image)
-            echo "Unstash '${stash_name}'"
-            dir(client.getUserPath()) {
-                unstash stash_name
-                sh "ls -la ${pwd()}"
-                client.run(command: '--version', buildInfo: buildInfo)
+            docker_images.each { docker_image ->
+                def stash_name = get_stash_name(docker_image)
+                echo "Unstash '${stash_name}'"
+                dir(client.getUserPath()) {
+                    unstash stash_name
+                    sh "ls -la ${pwd()}"
+                    client.run(command: '--version', buildInfo: buildInfo)
+                }
             }
-        }
 
-        server.publishBuildInfo buildInfo
+            server.publishBuildInfo buildInfo
+        }
     }
 }
