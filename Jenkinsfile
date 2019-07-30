@@ -45,15 +45,16 @@ docker_images.each { docker_image ->
     stages[docker_image] = get_stages(docker_image, artifactory_name, artifactory_repo)
 }
 
-stage("Build + upload") {
-    parallel stages
-}
+node {
+    stage("Build + upload") {
+        parallel stages
+    }
 
-stage("Retrieve build info") {
-    docker_images.each { docker_image ->
-        def stash_name = "bi-${docker_image}".replaceAll('/','-')
-        echo "Unstash '${stash_name}'"
-        unstash stash_name
+    stage("Retrieve build info") {
+        docker_images.each { docker_image ->
+            def stash_name = "bi-${docker_image}".replaceAll('/','-')
+            echo "Unstash '${stash_name}'"
+            unstash stash_name
+        }
     }
 }
-
