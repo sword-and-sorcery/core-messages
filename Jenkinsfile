@@ -6,6 +6,10 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
             def client = Artifactory.newConanClient()
             def remoteName = client.remote.add server: server, repo: artifactory_repo
 
+            stage("${docker_image}") {
+                echo 'Running in ${docker_image}'
+            }
+            
             stage("Get project") {
                 checkout scm
             }
