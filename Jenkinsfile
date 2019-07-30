@@ -1,9 +1,5 @@
-def artifactory_name = "Artifactory Docker"
-def artifactory_repo = "conan-local"
 
-def docker_images = ["conanio/gcc8", "conanio/gcc7"]
-
-def get_stages(docker_image) {
+def get_stages(docker_image, artifactory_name, artifactory_repo) {
     return {
         docker.image(docker_image).inside('--net=docker_jenkins_artifactory') {
             def server = Artifactory.server artifactory_name
@@ -27,11 +23,15 @@ def get_stages(docker_image) {
     }
 }
 
+def artifactory_name = "Artifactory Docker"
+def artifactory_repo = "conan-local"
+def docker_images = ["conanio/gcc8", "conanio/gcc7"]
+
 node {
     def stages = [:]
 
     docker_images.each { docker_image ->
-        stages[docker_image] = get_stages(docker_image)
+        stages[docker_image] = get_stages(docker_image, artifactory_name, artifactory_repo)
     }
     
     parallel stages
