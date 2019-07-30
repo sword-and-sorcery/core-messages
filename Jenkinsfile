@@ -29,12 +29,6 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
                 stage("Stash build info") {
                     def stash_name = "bi-${docker_image}".replaceAll('/','-')
                     echo "Stash '${stash_name}' -> '${client.getLogFilePath()}'"
-
-                    if (fileExists(client.getLogFilePath())) {
-                        echo 'Yes!!!!'
-                    } else {
-                        echo 'No////'
-                    }
                     dir(client.getUserPath()) {
                         sh "ls -la ${pwd()}"
                         stash name: stash_name, includes: "conan_log.log"
@@ -60,11 +54,12 @@ node {
     }
 
     stage("Retrieve build info") {
+        sh "ls -la ${pwd()}"
         docker_images.each { docker_image ->
             def stash_name = "bi-${docker_image}".replaceAll('/','-')
             echo "Unstash '${stash_name}'"
-
-            //unstash stash_name
+            unstash stash_name
+            sh "ls -la ${pwd()}"
         }
     }
 }
