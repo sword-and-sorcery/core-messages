@@ -27,7 +27,7 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
                 }
 
                 stage("Stash build info") {
-                    steps {
+                    step {
                         def stash_name = "bi-${docker_image}".replaceAll('/','-')
                         echo "Stash '${stash_name}' -> '${client.getLogFilePath()}'"
                         stash name: stash_name, includes: client.getLogFilePath()
