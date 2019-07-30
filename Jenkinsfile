@@ -1,3 +1,6 @@
+def get_stash_name(docker_image) {
+    return "bi-${docker_image}".replaceAll('/','-')
+}
 
 def get_stages(docker_image, artifactory_name, artifactory_repo) {
     return {
@@ -27,7 +30,7 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
                 }
 
                 stage("Stash build info") {
-                    def stash_name = "bi-${docker_image}".replaceAll('/','-')
+                    def stash_name = get_stash_name(docker_image)
                     echo "Stash '${stash_name}' -> '${client.getLogFilePath()}'"
                     dir(client.getUserPath()) {
                         sh "ls -la ${pwd()}"
@@ -59,7 +62,7 @@ node {
         def buildInfo = client.run(command: '--version')
 
         docker_images.each { docker_image ->
-            def stash_name = "bi-${docker_image}".replaceAll('/','-')
+            def stash_name = get_stash_name(docker_image)
             echo "Unstash '${stash_name}'"
             dir(client.getUserPath()) {
                 unstash stash_name
