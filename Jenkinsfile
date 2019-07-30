@@ -36,6 +36,7 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
                         echo 'No////'
                     }
                     dir(client.getUserPath()) {
+                        sh "ls -la ${pwd()}"
                         stash name: stash_name, includes: "conan_log.log"
                     }
                 }
