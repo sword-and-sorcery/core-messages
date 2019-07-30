@@ -19,6 +19,7 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
                 def buildInfo = client.run(command: uploadCommand)
                 // server.publishBuildInfo buildInfo
                 // TODO: We need to join the buildInfo of these jobs...
+                stash name: "bi-${docker_image}" includes: client.getLogFilePath()
             }
         }
     }
@@ -33,11 +34,19 @@ node {
         checkout scm
     }
 
+    def stages = [:]
+    docker_images.each { docker_image ->
+        stages[docker_image] = get_stages(docker_image, artifactory_name, artifactory_repo)
+    }
+
     stage("Build + upload") {
-        def stages = [:]
-        docker_images.each { docker_image ->
-            stages[docker_image] = get_stages(docker_image, artifactory_name, artifactory_repo)
-        }
         parallel stages
+    }
+
+    stage("Retrieve build info") {
+        docker_images.each { docker_image ->
+            echo "docker_image: ${docker_image}"
+            unstash "bi-${docker_image}"
+        }
     }
 }
