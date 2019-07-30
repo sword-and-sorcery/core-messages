@@ -10,10 +10,6 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
                 echo 'Running in ${docker_image}'
             }
 
-            stage("Get project") {
-                checkout scm
-            }
-
             stage("Get dependencies and create app") {
                 client.run(command: "create . sword/sorcery")
             }
@@ -33,11 +29,15 @@ def artifactory_repo = "conan-local"
 def docker_images = ["conanio/gcc8", "conanio/gcc7"]
 
 node {
-    def stages = [:]
-
-    docker_images.each { docker_image ->
-        stages[docker_image] = get_stages(docker_image, artifactory_name, artifactory_repo)
+    stage("Get project") {
+        checkout scm
     }
-    
-    parallel stages
+
+    stage("Build + upload") {
+        def stages = [:]
+        docker_images.each { docker_image ->
+            stages[docker_image] = get_stages(docker_image, artifactory_name, artifactory_repo)
+        }
+        parallel stages
+    }
 }
