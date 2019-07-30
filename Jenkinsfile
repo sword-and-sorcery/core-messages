@@ -2,7 +2,7 @@
 def get_stages(docker_image, artifactory_name, artifactory_repo) {
     return {
         node {
-            docker.image(docker_image).inside("--net=docker_jenkins_artifactory -v ${env.WORKSPACE}:${env.WORKSPACE}") {
+            docker.image(docker_image).inside("--net=docker_jenkins_artifactory") {
                 def server = Artifactory.server artifactory_name
                 def client = Artifactory.newConanClient()
                 def remoteName = client.remote.add server: server, repo: artifactory_repo
@@ -27,9 +27,11 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
                 }
 
                 stage("Stash build info") {
-                    def stash_name = "bi-${docker_image}".replaceAll('/','-')
-                    echo "Stash '${stash_name}' -> '${client.getLogFilePath()}'"
-                    stash name: stash_name, includes: client.getLogFilePath()
+                    steps {
+                        def stash_name = "bi-${docker_image}".replaceAll('/','-')
+                        echo "Stash '${stash_name}' -> '${client.getLogFilePath()}'"
+                        stash name: stash_name, includes: client.getLogFilePath()
+                    }
                 }
             }
         }
