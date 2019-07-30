@@ -54,12 +54,20 @@ node {
     }
 
     stage("Retrieve build info") {
-        sh "ls -la ${pwd()}"
+        def server = Artifactory.server artifactory_name
+        def client = Artifactory.newConanClient()
+        def buildInfo = client.run(command: '--version')
+
         docker_images.each { docker_image ->
             def stash_name = "bi-${docker_image}".replaceAll('/','-')
             echo "Unstash '${stash_name}'"
-            unstash stash_name
-            sh "ls -la ${pwd()}"
+            dir(client.getUserPath()) {
+                unstash stash_name
+                sh "ls -la ${pwd()}"
+                client.run(command: '--version', buildInfo: buildInfo)
+            }
         }
+
+        server.publishBuildInfo buildInfo
     }
 }
