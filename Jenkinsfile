@@ -29,7 +29,12 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
                 stage("Stash build info") {
                     def stash_name = "bi-${docker_image}".replaceAll('/','-')
                     echo "Stash '${stash_name}' -> '${client.getLogFilePath()}'"
-                    stash name: stash_name, includes: '**conan_log.log' // client.getLogFilePath()
+
+                    def files = findFiles(glob: '**/*')
+                    echo "${files[0].path}"
+                    //echo """${files[0].name} ${files[0].path} ${files[0].directory} ${files[0].length} ${files[0].lastModified}"""
+
+                    stash name: stash_name, includes: files[0].path // client.getLogFilePath()
                 }
             }
         }
