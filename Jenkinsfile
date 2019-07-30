@@ -1,6 +1,4 @@
 
-def data = [:]
-
 def get_stages(docker_image, artifactory_name, artifactory_repo) {
     return {
         node {
@@ -32,7 +30,11 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
                     def stash_name = "bi-${docker_image}".replaceAll('/','-')
                     echo "Stash '${stash_name}' -> '${client.getLogFilePath()}'"
 
-                    data[docker_image] = readFile(client.getLogFilePath())
+                    if (fileExists(client.getLogFilePath())) {
+                        echo 'Yes!!!!'
+                    } else {
+                        echo 'No////'
+                    }
                     //stash name: stash_name, includes: client.getLogFilePath()
                 }
             }
@@ -59,7 +61,6 @@ node {
             def stash_name = "bi-${docker_image}".replaceAll('/','-')
             echo "Unstash '${stash_name}'"
 
-            echo data[docker_image]
             //unstash stash_name
         }
     }
