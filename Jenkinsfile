@@ -20,6 +20,8 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
 
                 stage("Get dependencies and create app") {
                     client.run(command: "create . sword/sorcery")
+                    sh "ls -la ."
+                    sh "ls -la ${pwd()}"
                 }
 
                 stage("Upload packages") {
