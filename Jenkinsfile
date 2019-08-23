@@ -10,6 +10,9 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
                 def client = Artifactory.newConanClient()
                 def remoteName = client.remote.add server: server, repo: artifactory_repo
 
+                client.run(command: "config set general.default_package_id_mode=full_version_mode")
+                client.run(command: "config set general.revisions_enabled=1")
+
                 stage("${docker_image}") {
                     echo 'Running in ${docker_image}'
                 }
@@ -20,8 +23,9 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
 
                 stage("Get dependencies and create app") {
                     client.run(command: "create . sword/sorcery")
+                    client.run(command: "graph lock . --lockfile=conan.lock")
                     sh "ls -la ."
-                    sh "ls -la ${pwd()}"
+                    sh "cat conan.lock"
                 }
 
                 stage("Upload packages") {
