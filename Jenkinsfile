@@ -35,16 +35,15 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
                     // TODO: We need to join the buildInfo of these jobs...
                 }
 
+                stage("Compute build info from lockfile") {
+                    git url: 'https://gist.github.com/601afe655ea2577d5f0ac8bc4035bdc6.git'
+                    extcode = load 'lockfile_buildinfo.groovy'
+                    extcode.hello("${docker_image}")
+                }
+
                 stage("Stash build info") {
                     def stash_name = get_stash_name(docker_image)
                     echo "Stash '${stash_name}' -> '${client.getLogFilePath()}'"
-
-                    git url: 'https://gist.github.com/601afe655ea2577d5f0ac8bc4035bdc6.git'
-                    sh "ls -la ${pwd()}"
-
-                    extcode = load 'lockfile_buildinfo.groovy'
-                    extcode.hello("${docker_image}")
-
                     dir(client.getUserPath()) {
                         //sh "ls -la ${pwd()}"
                         stash name: stash_name, includes: "conan_log.log"
