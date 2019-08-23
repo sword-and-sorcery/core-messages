@@ -38,7 +38,7 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
                     sh "ls -la ${pwd()}"
 
                     dir(client.getUserPath()) {
-                        sh "ls -la ${pwd()}"
+                        //sh "ls -la ${pwd()}"
                         stash name: stash_name, includes: "conan_log.log"
                     }
                 }
@@ -49,7 +49,8 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
 
 def artifactory_name = "Artifactory Docker"
 def artifactory_repo = "conan-local"
-def docker_images = ["conanio/gcc8", "conanio/gcc7"]
+//def docker_images = ["conanio/gcc8", "conanio/gcc7"]
+def docker_images = ["conanio/gcc8"]
 
 def stages = [:]
 docker_images.each { docker_image ->
