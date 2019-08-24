@@ -38,6 +38,7 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
                 stage("Compute build info from lockfile") {
                     git url: 'https://gist.github.com/601afe655ea2577d5f0ac8bc4035bdc6.git'
                     extcode = load 'lockfile_buildinfo.groovy'
+                    extcode.hello("Jenkinsfile")
                     extcode.parse_lockfile("conan.lock")
                     
                 }
