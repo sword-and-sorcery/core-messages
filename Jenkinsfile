@@ -22,9 +22,8 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
                 }
 
                 stage("Get dependencies and create app") {
-                    client.run(command: "create . sword/sorcery --build missing")
                     client.run(command: "graph lock . --lockfile=conan.lock")
-                    sh "ls -la ."
+                    client.run(command: "create . sword/sorcery --lockfile=conan.lock --build missing")
                     sh "cat conan.lock"
                 }
 
