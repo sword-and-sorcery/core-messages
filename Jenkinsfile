@@ -72,14 +72,12 @@ node {
             sh 'pip install rtpy'
 
             String python_command = "python lockfile_buildinfo.py --remotes=http://artifactory:8081/artifactory,admin,password"
+            python_command += " --build_number=${currentBuild.number} --build_name=Jenkins"
 
             docker_images.each { docker_image ->
                 def stash_name = get_stash_name(docker_image)
-                echo "Unstash '${stash_name}'"
                 unstash stash_name
                 python_command += " " + lockfile_name(docker_image)
-                sh "ls -la ${pwd()}"
-                //client.run(command: '--version', buildInfo: buildInfo)
             }
 
             echo python_command
@@ -87,8 +85,8 @@ node {
             sh "ls -la ${pwd()}"
             sh "cat buildinfo.json"
 
-            def buildInfo = Artifactory.newBuildInfo()
-            server.publishBuildInfo buildInfo
+            String publish_command = "python publish_buildinfo.py --remote=http://artifactory:8081/artifactory,admin,password"
+            sh publish_command
         }
     }
 }
