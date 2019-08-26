@@ -84,8 +84,11 @@ node {
 
             echo python_command
             sh python_command
+            sh "ls -la ${pwd()}"
+            sh "cat buildinfo.json"
 
-            //server.publishBuildInfo buildInfo
+            def buildInfo = Artifactory.newBuildInfo()
+            server.publishBuildInfo buildInfo
         }
     }
 }
