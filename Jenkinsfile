@@ -2,6 +2,10 @@ def get_stash_name(docker_image) {
     return "bi-${docker_image}".replaceAll('/','-')
 }
 
+def lockfile_name(docker_image) {
+    return "${get_stash_name(docker_image)}.lock"
+}
+
 def get_stages(docker_image, artifactory_name, artifactory_repo) {
     return {
         node {
@@ -22,9 +26,9 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
                 }
 
                 stage("Get dependencies and create app") {
-                    client.run(command: "graph lock . --lockfile=conan.lock")
-                    client.run(command: "create . sword/sorcery --lockfile=conan.lock --build missing")
-                    sh "cat conan.lock"
+                    client.run(command: "graph lock . --lockfile=${lockfile_name(docker_image)}")
+                    client.run(command: "create . sword/sorcery --lockfile=${lockfile_name(docker_image)} --build missing")
+                    sh "cat ${lockfile_name(docker_image)}"
                 }
 
                 stage("Upload packages") {
@@ -34,21 +38,10 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
                     // TODO: We need to join the buildInfo of these jobs...
                 }
 
-                stage("Compute build info from lockfile") {
-                    git url: 'https://gist.github.com/601afe655ea2577d5f0ac8bc4035bdc6.git'
-                    extcode = load 'lockfile_buildinfo.groovy'
-                    extcode.hello("Jenkinsfile")
-                    extcode.parse_lockfile("conan.lock")
-                    
-                }
-
-                stage("Stash build info") {
+                stage("Stash lockfile") {
                     def stash_name = get_stash_name(docker_image)
-                    echo "Stash '${stash_name}' -> '${client.getLogFilePath()}'"
-                    dir(client.getUserPath()) {
-                        //sh "ls -la ${pwd()}"
-                        stash name: stash_name, includes: "conan_log.log"
-                    }
+                    echo "Stash '${stash_name}' -> '${lockfile_name(docker_image)}'"
+                    stash name: stash_name, includes: "${lockfile_name(docker_image)}"
                 }
             }
         }
@@ -82,7 +75,7 @@ node {
                 dir(client.getUserPath()) {
                     unstash stash_name
                     sh "ls -la ${pwd()}"
-                    client.run(command: '--version', buildInfo: buildInfo)
+                    //client.run(command: '--version', buildInfo: buildInfo)
                 }
             }
 
