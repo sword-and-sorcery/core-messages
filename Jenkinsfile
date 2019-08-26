@@ -34,9 +34,7 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
 
                 stage("Upload packages") {
                     String uploadCommand = "upload core-messages* --all -r ${remoteName} --confirm"
-                    def buildInfo = client.run(command: uploadCommand)
-                    // server.publishBuildInfo buildInfo
-                    // TODO: We need to join the buildInfo of these jobs...
+                    client.run(command: uploadCommand)
                 }
 
                 stage("Stash lockfile") {
@@ -51,8 +49,7 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
 
 def artifactory_name = "Artifactory Docker"
 def artifactory_repo = "conan-local"
-//def docker_images = ["conanio/gcc8", "conanio/gcc7"]
-def docker_images = ["conanio/gcc8"]
+def docker_images = ["conanio/gcc8", "conanio/gcc7"]
 
 def stages = [:]
 docker_images.each { docker_image ->
@@ -68,19 +65,27 @@ node {
         docker.image("conanio/gcc8").inside("--net=docker_jenkins_artifactory") {
             def server = Artifactory.server artifactory_name
             def client = Artifactory.newConanClient()
-            def buildInfo = client.run(command: '--version')
+            //def buildInfo = client.run(command: '--version')
+
+            git url: 'https://gist.github.com/a39acad525fd3e7e5315b2fa0bc70b6f.git'
+            sh 'python --version'
+            sh 'pip install rtpy'
+
+            String python_command = "python lockfile_buildinfo.py --remotes=http://localhost:8081/artifactory,admin,password"
 
             docker_images.each { docker_image ->
                 def stash_name = get_stash_name(docker_image)
                 echo "Unstash '${stash_name}'"
-                dir(client.getUserPath()) {
-                    unstash stash_name
-                    sh "ls -la ${pwd()}"
-                    //client.run(command: '--version', buildInfo: buildInfo)
-                }
+                unstash stash_name
+                python_command += " " + lockfile_name(docker_image)
+                sh "ls -la ${pwd()}"
+                //client.run(command: '--version', buildInfo: buildInfo)
             }
 
-            server.publishBuildInfo buildInfo
+            echo python_command
+            sh python_command
+
+            //server.publishBuildInfo buildInfo
         }
     }
 }
