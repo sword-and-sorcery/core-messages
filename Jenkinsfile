@@ -13,6 +13,7 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
                 def server = Artifactory.server artifactory_name
                 def client = Artifactory.newConanClient()
                 def remoteName = client.remote.add server: server, repo: artifactory_repo
+                def lockfile = lockfile_name(docker_image)                   
 
                 client.run(command: "config set general.default_package_id_mode=full_version_mode")
                 client.run(command: "config set general.revisions_enabled=1")
@@ -26,9 +27,8 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
                 }
 
                 stage("Get dependencies and create app") {
-                    def lockfile = lockfile_name(docker_image)
-                    client.run(command: "graph lock . --lockfile=${lockfile}")
-                    client.run(command: "create . sword/sorcery --lockfile=${lockfile} --build missing")
+                    client.run(command: "graph lock . --lockfile=${lockfile}".toString())
+                    client.run(command: "create . sword/sorcery --lockfile=${lockfile} --build missing".toString())
                     sh "cat ${lockfile}"
                 }
 
@@ -41,7 +41,6 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
 
                 stage("Stash lockfile") {
                     def stash_name = get_stash_name(docker_image)
-                    def lockfile = lockfile_name(docker_image)
                     echo "Stash '${stash_name}' -> '${lockfile}'"
                     stash name: stash_name, includes: "${lockfile}"
                 }
