@@ -68,11 +68,10 @@ node {
             //def buildInfo = client.run(command: '--version')
 
             git url: 'https://gist.github.com/a39acad525fd3e7e5315b2fa0bc70b6f.git'
-            sh 'python --version'
             sh 'pip install rtpy'
 
             String python_command = "python lockfile_buildinfo.py --remotes=http://artifactory:8081/artifactory,admin,password"
-            python_command += " --build_number=${currentBuild.number} --build_name=Jenkins"
+            python_command += " --build-number=${currentBuild.number} --build-name=Jenkins"
 
             docker_images.each { docker_image ->
                 def stash_name = get_stash_name(docker_image)
