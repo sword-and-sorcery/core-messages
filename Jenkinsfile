@@ -83,7 +83,7 @@ node {
             sh "ls -la ${pwd()}"
             sh "cat buildinfo.json"
 
-            String publish_command = "python publish_buildinfo.py --remote=http://artifactory:8081/artifactory,admin,password"
+            String publish_command = "python publish_buildinfo.py --remote=http://artifactory:8081/artifactory,admin,password buildinfo.json"
             sh publish_command
         }
     }
