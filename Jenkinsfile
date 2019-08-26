@@ -26,9 +26,10 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
                 }
 
                 stage("Get dependencies and create app") {
-                    client.run(command: "graph lock . --lockfile=${lockfile_name(docker_image)}")
-                    client.run(command: "create . sword/sorcery --lockfile=${lockfile_name(docker_image)} --build missing")
-                    sh "cat ${lockfile_name(docker_image)}"
+                    def lockfile = lockfile_name(docker_image)
+                    client.run(command: "graph lock . --lockfile=${lockfile}")
+                    client.run(command: "create . sword/sorcery --lockfile=${lockfile} --build missing")
+                    sh "cat ${lockfile}"
                 }
 
                 stage("Upload packages") {
@@ -40,8 +41,9 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
 
                 stage("Stash lockfile") {
                     def stash_name = get_stash_name(docker_image)
-                    echo "Stash '${stash_name}' -> '${lockfile_name(docker_image)}'"
-                    stash name: stash_name, includes: "${lockfile_name(docker_image)}"
+                    def lockfile = lockfile_name(docker_image)
+                    echo "Stash '${stash_name}' -> '${lockfile}'"
+                    stash name: stash_name, includes: "${lockfile}"
                 }
             }
         }
