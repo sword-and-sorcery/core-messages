@@ -65,7 +65,6 @@ node {
         docker.image("conanio/gcc8").inside("--net=docker_jenkins_artifactory") {
             def server = Artifactory.server artifactory_name
             def client = Artifactory.newConanClient()
-            //def buildInfo = client.run(command: '--version')
 
             git url: 'https://gist.github.com/a39acad525fd3e7e5315b2fa0bc70b6f.git'
             sh 'pip install rtpy'
