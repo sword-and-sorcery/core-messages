@@ -71,7 +71,7 @@ node {
             sh 'pip install rtpy'
 
             String python_command = "python lockfile_buildinfo.py --remotes=http://artifactory:8081/artifactory,admin,password"
-            python_command += " --build-number=${buildInfo.getNumber()} --build-name=${buildInfo.getName()}"
+            python_command += " --build-number=${buildInfo.getNumber()} --build-name=\"${buildInfo.getName()}\""
 
             docker_images.each { docker_image ->
                 def stash_name = get_stash_name(docker_image)
