@@ -63,14 +63,14 @@ node {
 
     stage("Retrieve build info") {
         docker.image("conanio/gcc8").inside("--net=docker_jenkins_artifactory") {
-            // def server = Artifactory.server artifactory_name
-            // def client = Artifactory.newConanClient()
             def buildInfo = Artifactory.newBuildInfo()
+            String artifactory_credentials = "http://artifactory:8081/artifactory,admin,password"
 
+            // Install helper script (WIP)
             git url: 'https://gist.github.com/a39acad525fd3e7e5315b2fa0bc70b6f.git'
             sh 'pip install rtpy'
 
-            String python_command = "python lockfile_buildinfo.py --remotes=http://artifactory:8081/artifactory,admin,password"
+            String python_command = "python lockfile_buildinfo.py --remotes=${artifactory_credentials}"
             python_command += " --build-number=${buildInfo.getNumber()} --build-name=\"${buildInfo.getName()}\""
 
             docker_images.each { docker_image ->
@@ -84,7 +84,8 @@ node {
             sh "ls -la ${pwd()}"
             sh "cat buildinfo.json"
 
-            String publish_command = "python publish_buildinfo.py --remote=http://artifactory:8081/artifactory,admin,password buildinfo.json"
+            // Publish build info
+            String publish_command = "python publish_buildinfo.py --remote=${artifactory_credentials} buildinfo.json"
             sh publish_command
         }
     }
