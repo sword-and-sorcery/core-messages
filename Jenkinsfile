@@ -6,7 +6,7 @@ def lockfile_name(docker_image) {
     return "${get_stash_name(docker_image)}.lock"
 }
 
-def get_stages(docker_image, artifactory_name, artifactory_repo) {
+def get_stages(docker_image, artifactory_name, artifactory_repo, create_args) {
     return {
         node {
             docker.image(docker_image).inside("--net=docker_jenkins_artifactory") {
@@ -29,8 +29,9 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
                     }
 
                     stage("Get dependencies and create app") {
-                        client.run(command: "graph lock . --lockfile=${lockfile}".toString())
-                        client.run(command: "create . sword/sorcery --lockfile=${lockfile}".toString())
+                        String arguments = "${create_args} --lockfile=${lockfile}"
+                        client.run(command: "graph lock . ${arguments}")
+                        client.run(command: "create . sword/sorcery ${arguments}")
                         sh "cat ${lockfile}"
                     }
 
@@ -56,10 +57,11 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
 def artifactory_name = "Artifactory Docker"
 def artifactory_repo = "conan-local"
 def docker_images = ["conanio/gcc8", "conanio/gcc7"]
+def create_args_list = ["-s compiler.libcxx=libstdc++", "-s compiler.libcxx=libstdc++11"]
 
 def stages = [:]
-docker_images.each { docker_image ->
-    stages[docker_image] = get_stages(docker_image, artifactory_name, artifactory_repo)
+[docker_images, create_args_list].each { docker_image, create_args ->
+    stages[docker_image + " " + create_args] = get_stages(docker_image, artifactory_name, artifactory_repo, create_args)
 }
 
 node {
