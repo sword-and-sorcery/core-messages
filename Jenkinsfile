@@ -1,9 +1,9 @@
-def get_stash_name(docker_image) {
-    return "bi-${docker_image}".replaceAll('/','-')
+def get_stash_name(docker_image, create_args) {
+    return "bi-${docker_image}-${create_args}".replaceAll('/','-')
 }
 
-def lockfile_name(docker_image) {
-    return "${get_stash_name(docker_image)}.lock"
+def lockfile_name(docker_image, create_args) {
+    return "${get_stash_name(docker_image, create_args)}.lock"
 }
 
 def get_stages(docker_image, artifactory_name, artifactory_repo, create_args) {
@@ -14,7 +14,7 @@ def get_stages(docker_image, artifactory_name, artifactory_repo, create_args) {
                 def client = Artifactory.newConanClient()
                 client.run(command: "remote clean")
                 def remoteName = client.remote.add server: server, repo: artifactory_repo
-                def lockfile = lockfile_name(docker_image)                   
+                def lockfile = lockfile_name(docker_image, create_args)
 
                 try {
                     client.run(command: "config set general.default_package_id_mode=full_version_mode")
@@ -41,7 +41,7 @@ def get_stages(docker_image, artifactory_name, artifactory_repo, create_args) {
                     }
 
                     stage("Stash lockfile") {
-                        def stash_name = get_stash_name(docker_image)
+                        def stash_name = get_stash_name(docker_image, create_args)
                         echo "Stash '${stash_name}' -> '${lockfile}'"
                         stash name: stash_name, includes: "${lockfile}"
                     }
@@ -86,9 +86,11 @@ node {
                 python_command += " --multi-module"
 
                 docker_images.each { docker_image ->
-                    def stash_name = get_stash_name(docker_image)
-                    unstash stash_name
-                    python_command += " " + lockfile_name(docker_image)
+                    create_args_list.each { create_args ->
+                        def stash_name = get_stash_name(docker_image, create_args)
+                        unstash stash_name
+                        python_command += " " + lockfile_name(docker_image, create_args)
+                    }
                 }
 
                 echo python_command
