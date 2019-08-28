@@ -5,6 +5,12 @@ class CoreMessages(ConanFile):
     name = "core-messages"
     version = "0.0"
 
+    url = "https://github.com/sword-and-sorcery/core-messages"
+    homepage = "https://sword-and-sorcery.github.io/sword-and-sorcery/"
+    author = "conan.io"
+    license = "MIT"
+    description = "Definition of common messages across the framework"
+
     settings = "os", "arch", "compiler", "build_type"
     options = {"shared": [True, False]}
     default_options = {"shared": False}
