@@ -12,6 +12,7 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
             docker.image(docker_image).inside("--net=docker_jenkins_artifactory") {
                 def server = Artifactory.server artifactory_name
                 def client = Artifactory.newConanClient()
+                client.run(command: "remote clean")
                 def remoteName = client.remote.add server: server, repo: artifactory_repo
                 def lockfile = lockfile_name(docker_image)                   
 
@@ -29,7 +30,7 @@ def get_stages(docker_image, artifactory_name, artifactory_repo) {
 
                     stage("Get dependencies and create app") {
                         client.run(command: "graph lock . --lockfile=${lockfile}".toString())
-                        client.run(command: "create . sword/sorcery --lockfile=${lockfile} --build missing".toString())
+                        client.run(command: "create . sword/sorcery --lockfile=${lockfile}".toString())
                         sh "cat ${lockfile}"
                     }
 
@@ -69,6 +70,10 @@ node {
 
         stage("Retrieve build info") {
             docker.image("conanio/gcc8").inside("--net=docker_jenkins_artifactory") {
+                def client = Artifactory.newConanClient()
+                client.run(command: "remote clean")
+                client.remote.add server: server, repo: artifactory_repo
+
                 def buildInfo = Artifactory.newBuildInfo()
                 String artifactory_credentials = "http://artifactory:8081/artifactory,admin,password"
 
