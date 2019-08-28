@@ -70,10 +70,6 @@ node {
 
         stage("Retrieve build info") {
             docker.image("conanio/gcc8").inside("--net=docker_jenkins_artifactory") {
-                def client = Artifactory.newConanClient()
-                client.run(command: "remote clean")
-                client.remote.add server: server, repo: artifactory_repo
-
                 def buildInfo = Artifactory.newBuildInfo()
                 String artifactory_credentials = "http://artifactory:8081/artifactory,admin,password"
 
