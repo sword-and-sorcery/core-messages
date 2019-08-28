@@ -30,8 +30,8 @@ def get_stages(docker_image, artifactory_name, artifactory_repo, create_args) {
 
                     stage("Get dependencies and create app") {
                         String arguments = "${create_args} --lockfile=${lockfile}"
-                        client.run(command: "graph lock . ${arguments}")
-                        client.run(command: "create . sword/sorcery ${arguments}")
+                        client.run(command: "graph lock . ${arguments}".toString())
+                        client.run(command: "create . sword/sorcery ${arguments}".toString())
                         sh "cat ${lockfile}"
                     }
 
