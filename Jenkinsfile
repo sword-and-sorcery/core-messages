@@ -1,5 +1,5 @@
 def get_stash_name(docker_image, create_args) {
-    return "bi-${docker_image}-${create_args}".replaceAll('/','-')
+    return "bi-${docker_image}-${create_args}".replaceAll('[/\\=+\.]','')
 }
 
 def lockfile_name(docker_image, create_args) {
