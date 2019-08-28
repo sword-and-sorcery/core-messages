@@ -79,6 +79,7 @@ node {
 
                 String python_command = "python lockfile_buildinfo.py --remotes=${artifactory_credentials}"
                 python_command += " --build-number=${buildInfo.getNumber()} --build-name=\"${buildInfo.getName()}\""
+                python_command += " --multi-module"
 
                 docker_images.each { docker_image ->
                     def stash_name = get_stash_name(docker_image)
