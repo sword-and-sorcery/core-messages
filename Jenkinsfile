@@ -61,7 +61,8 @@ def create_args_list = ["-s compiler.libcxx=libstdc++", "-s compiler.libcxx=libs
 
 def stages = [:]
 [docker_images, create_args_list].each { docker_image, create_args ->
-    stages[docker_image + " " + create_args] = get_stages(docker_image, artifactory_name, artifactory_repo, create_args)
+    Sting stage_id = "${docker_image} ${create_args}"
+    stages[stage_id] = get_stages(docker_image, artifactory_name, artifactory_repo, create_args)
 }
 
 node {
