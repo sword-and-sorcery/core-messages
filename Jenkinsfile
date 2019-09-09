@@ -69,7 +69,9 @@ docker_images.each { docker_image ->
 node {
     try {
         stage("Build + upload") {
-            parallel stages
+            withEnv(["CONAN_HOOK_ERROR_LEVEL=40"]) {
+                parallel stages
+            }
         }
 
         stage("Retrieve build info") {
