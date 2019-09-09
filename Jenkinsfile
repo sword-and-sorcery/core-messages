@@ -12,13 +12,13 @@ def get_stages(docker_image, artifactory_name, artifactory_repo, create_args) {
             docker.image(docker_image).inside("--net=docker_jenkins_artifactory") {
                 def server = Artifactory.server artifactory_name
                 def client = Artifactory.newConanClient()
-                client.run(command: "remote clean")
-                def remoteName = client.remote.add server: server, repo: artifactory_repo
+                def remoteName = "artifactory-local"
                 def lockfile = lockfile_name(docker_image, create_args)
 
                 try {
-                    client.run(command: "config set general.default_package_id_mode=full_version_mode")
-                    client.run(command: "config set general.revisions_enabled=1")
+                    client.run(command: "config install --args=\"-b config\" -sf conan/config https://github.com/sword-and-sorcery/sword-and-sorcery.git")
+                    client.run(command: "config install -sf hooks -tf hooks https://github.com/conan-io/hooks.git")
+                    client.remote.add server: server, repo: artifactory_repo, remoteName: remoteName, force: true
 
                     stage("${docker_image}") {
                         echo 'Running in ${docker_image}'
