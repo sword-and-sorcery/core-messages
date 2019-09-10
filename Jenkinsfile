@@ -9,7 +9,7 @@ def get_stages(id, docker_image, artifactory_name, artifactory_repo, profile) {
                 def lockfile = "${id}.lock"
 
                 try {
-                    client.run(command: "config install --args=\"-b config\" -sf conan/config https://github.com/sword-and-sorcery/sword-and-sorcery.git")
+                    client.run(command: "config install -sf conan/config https://github.com/sword-and-sorcery/sword-and-sorcery.git")
                     client.run(command: "config install -sf hooks -tf hooks https://github.com/conan-io/hooks.git")
                     client.remote.add server: server, repo: artifactory_repo, remoteName: remoteName, force: true
 
