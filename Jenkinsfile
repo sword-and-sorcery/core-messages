@@ -62,12 +62,9 @@ def get_stages(id, docker_image, artifactory_name, artifactory_repo, profile) {
 
 def artifactory_name = "Artifactory Docker"
 def artifactory_repo = "conan-local"
-def docker_runs = [:]
+def docker_runs = [:]  // [id] = [docker_image, profile]
 docker_runs["conanio-gcc8"] = ["conanio/gcc8", "conanio-gcc8"]
 docker_runs["conanio-gcc7"] = ["conanio/gcc7", "conanio-gcc7"]
-
-//def docker_images = ["conanio/gcc8", "conanio/gcc7"]
-//def create_args_list = ["-s compiler.libcxx=libstdc++", "-s compiler.libcxx=libstdc++11"]
 
 def stages = [:]
 docker_runs.each { id, values ->
@@ -87,19 +84,24 @@ node {
             docker.image("conanio/gcc8").inside("--net=docker_jenkins_artifactory") {
                 def buildInfo = Artifactory.newBuildInfo()
                 String artifactory_credentials = "http://artifactory:8081/artifactory,admin,password"
+                def buildInfoFilename = "buildinfo.json"
                 
                 // Install helper script (WIP)
                 git url: 'https://gist.github.com/a39acad525fd3e7e5315b2fa0bc70b6f.git'
                 sh 'pip install rtpy'
 
+                // Merge Build Info from nodes
+                String merge_bi_command = "python merge_buildinfo.py --output-file ${buildInfoFilename}"
                 docker_runs.each { id, values ->
                     unstash id
-
-                    // Publish build info
-                    def buildInfoFilename = "${id}.json"
-                    String publish_command = "python publish_buildinfo.py --remote=${artifactory_credentials} ${buildInfoFilename}"
-                    sh publish_command
+                    merge_bi_command += " ${id}.json"
                 }
+                sh merge_bi_command
+
+                // Publish build info
+                String publish_command = "python publish_buildinfo.py --remote=${artifactory_credentials} ${buildInfoFilename}"
+                sh publish_command
+
             }
         }
     }
