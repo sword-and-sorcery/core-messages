@@ -33,9 +33,22 @@ def get_stages(id, docker_image, artifactory_name, artifactory_repo, profile) {
                         client.run(command: uploadCommand)
                     }
 
-                    stage("Stash lockfile") {
-                        echo "Stash '${id}' -> '${lockfile}'"
-                        stash name: id, includes: "${lockfile}"
+                    stage("Compute build info") {
+                        def buildInfo = Artifactory.newBuildInfo()
+                        String artifactory_credentials = "http://artifactory:8081/artifactory,admin,password"
+                        def buildInfoFilename = "${id}.json"
+
+                        // Install helper script (WIP)
+                        git url: 'https://gist.github.com/a39acad525fd3e7e5315b2fa0bc70b6f.git'
+                        sh 'pip install rtpy'
+
+                        String python_command = "python lockfile_buildinfo.py --remotes=${artifactory_credentials}"
+                        python_command += " --build-number=${buildInfo.getNumber()} --build-name=\"${buildInfo.getName()}\""
+                        python_command += " --multi-module"
+                        python_command += " --output-file=${buildInfoFilename} ${lockfile}"
+
+                        echo "Stash '${id}' -> '${buildInfoFilename}'"
+                        stash name: id, includes: "${buildInfoFilename}"
                     }
                 }
                 finally {
@@ -74,27 +87,15 @@ node {
                 def buildInfo = Artifactory.newBuildInfo()
                 String artifactory_credentials = "http://artifactory:8081/artifactory,admin,password"
 
-                // Install helper script (WIP)
-                git url: 'https://gist.github.com/a39acad525fd3e7e5315b2fa0bc70b6f.git'
-                sh 'pip install rtpy'
-
-                String python_command = "python lockfile_buildinfo.py --remotes=${artifactory_credentials}"
-                python_command += " --build-number=${buildInfo.getNumber()} --build-name=\"${buildInfo.getName()}\""
-                python_command += " --multi-module"
-
                 docker_runs.each { id, values ->
+                    def buildInfoFilename = "${id}.json"
+
                     unstash id
-                    python_command += " ${id}.lock"
+                    // Publish build info
+                    String publish_command = "python publish_buildinfo.py --remote=${artifactory_credentials} ${buildInfoFilename}"
+                    sh publish_command
+
                 }
-
-                echo python_command
-                sh python_command
-                sh "ls -la ${pwd()}"
-                sh "cat buildinfo.json"
-
-                // Publish build info
-                String publish_command = "python publish_buildinfo.py --remote=${artifactory_credentials} buildinfo.json"
-                sh publish_command
             }
         }
     }
