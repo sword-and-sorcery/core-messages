@@ -1,26 +1,19 @@
-def get_stash_name(docker_image, create_args) {
-    return "bi-${docker_image}-${create_args}".replaceAll('[/\\=+.\\s]','')
-}
 
-def lockfile_name(docker_image, create_args) {
-    return "${get_stash_name(docker_image, create_args)}.lock"
-}
-
-def get_stages(docker_image, artifactory_name, artifactory_repo, create_args) {
+def get_stages(id, docker_image, artifactory_name, artifactory_repo, profile) {
     return {
         node {
             docker.image(docker_image).inside("--net=docker_jenkins_artifactory") {
                 def server = Artifactory.server artifactory_name
                 def client = Artifactory.newConanClient()
                 def remoteName = "artifactory-local"
-                def lockfile = lockfile_name(docker_image, create_args)
+                def lockfile = "${id}.lock"
 
                 try {
                     client.run(command: "config install --args=\"-b config\" -sf conan/config https://github.com/sword-and-sorcery/sword-and-sorcery.git")
                     client.run(command: "config install -sf hooks -tf hooks https://github.com/conan-io/hooks.git")
                     client.remote.add server: server, repo: artifactory_repo, remoteName: remoteName, force: true
 
-                    stage("${docker_image}") {
+                    stage("${id}") {
                         echo 'Running in ${docker_image}'
                     }
 
@@ -29,7 +22,7 @@ def get_stages(docker_image, artifactory_name, artifactory_repo, create_args) {
                     }
 
                     stage("Get dependencies and create app") {
-                        String arguments = "${create_args} --lockfile=${lockfile}"
+                        String arguments = "--profile ${profile} --lockfile=${lockfile}"
                         client.run(command: "graph lock . ${arguments}".toString())
                         client.run(command: "create . sword/sorcery ${arguments}".toString())
                         sh "cat ${lockfile}"
@@ -41,9 +34,8 @@ def get_stages(docker_image, artifactory_name, artifactory_repo, create_args) {
                     }
 
                     stage("Stash lockfile") {
-                        def stash_name = get_stash_name(docker_image, create_args)
-                        echo "Stash '${stash_name}' -> '${lockfile}'"
-                        stash name: stash_name, includes: "${lockfile}"
+                        echo "Stash '${id}' -> '${lockfile}'"
+                        stash name: id, includes: "${lockfile}"
                     }
                 }
                 finally {
@@ -56,15 +48,18 @@ def get_stages(docker_image, artifactory_name, artifactory_repo, create_args) {
 
 def artifactory_name = "Artifactory Docker"
 def artifactory_repo = "conan-local"
-def docker_images = ["conanio/gcc8", "conanio/gcc7"]
-def create_args_list = ["-s compiler.libcxx=libstdc++", "-s compiler.libcxx=libstdc++11"]
+def docker_runs = [:]
+docker_runs["conanio-gcc8"] = ["conanio/gcc8", "conanio-gcc8"]
+docker_runs["conanio-gcc7"] = ["conanio/gcc7", "conanio-gcc7"]
+
+//def docker_images = ["conanio/gcc8", "conanio/gcc7"]
+//def create_args_list = ["-s compiler.libcxx=libstdc++", "-s compiler.libcxx=libstdc++11"]
 
 def stages = [:]
-docker_images.each { docker_image ->
-    create_args_list.each { create_args ->
-        stages[docker_image + " " + create_args] = get_stages(docker_image, artifactory_name, artifactory_repo, create_args)
-    }
+docker_runs.each { id, values ->
+    stages[id] = get_stages(id, values[0], artifactory_name, artifactory_repo, values[1])
 }
+
 
 node {
     try {
@@ -87,12 +82,9 @@ node {
                 python_command += " --build-number=${buildInfo.getNumber()} --build-name=\"${buildInfo.getName()}\""
                 python_command += " --multi-module"
 
-                docker_images.each { docker_image ->
-                    create_args_list.each { create_args ->
-                        def stash_name = get_stash_name(docker_image, create_args)
-                        unstash stash_name
-                        python_command += " " + lockfile_name(docker_image, create_args)
-                    }
+                docker_runs.each { id, values ->
+                    unstash id
+                    python_command += " ${id}.lock"
                 }
 
                 echo python_command
