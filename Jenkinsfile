@@ -87,15 +87,18 @@ node {
             docker.image("conanio/gcc8").inside("--net=docker_jenkins_artifactory") {
                 def buildInfo = Artifactory.newBuildInfo()
                 String artifactory_credentials = "http://artifactory:8081/artifactory,admin,password"
+                
+                // Install helper script (WIP)
+                git url: 'https://gist.github.com/a39acad525fd3e7e5315b2fa0bc70b6f.git'
+                sh 'pip install rtpy'
 
                 docker_runs.each { id, values ->
-                    def buildInfoFilename = "${id}.json"
-
                     unstash id
+
                     // Publish build info
+                    def buildInfoFilename = "${id}.json"
                     String publish_command = "python publish_buildinfo.py --remote=${artifactory_credentials} ${buildInfoFilename}"
                     sh publish_command
-
                 }
             }
         }
