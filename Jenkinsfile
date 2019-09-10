@@ -46,6 +46,7 @@ def get_stages(id, docker_image, artifactory_name, artifactory_repo, profile) {
                         python_command += " --build-number=${buildInfo.getNumber()} --build-name=\"${buildInfo.getName()}\""
                         python_command += " --multi-module"
                         python_command += " --output-file=${buildInfoFilename} ${lockfile}"
+                        sh python_command
 
                         echo "Stash '${id}' -> '${buildInfoFilename}'"
                         stash name: id, includes: "${buildInfoFilename}"
