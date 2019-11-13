@@ -2,7 +2,7 @@
 
 > ⚠️ **Full docs**: https://sword-and-sorcery.github.io/sword-and-sorcery/
 
-Definition of common messages across the framework
+Definition of common messages for all the framework
 
 
 ```
