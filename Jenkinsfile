@@ -1,5 +1,13 @@
 
-def get_stages(id, docker_image, artifactory_name, artifactory_repo, profile) {
+def artifactory_name = "Artifactory Docker"
+def artifactory_repo = "conan-local"
+def docker_runs = [:]  // [id] = [docker_image, profile]
+docker_runs["conanio-gcc8"] = ["conanio/gcc8", "conanio-gcc8"]
+docker_runs["conanio-gcc7"] = ["conanio/gcc7", "conanio-gcc7"]
+
+def user_channel = "sword/sorcery"
+
+def get_stages(id, docker_image, artifactory_name, artifactory_repo, profile, user_channel) {
     return {
         node {
             docker.image(docker_image).inside("--net=docker_jenkins_artifactory") {
@@ -24,7 +32,7 @@ def get_stages(id, docker_image, artifactory_name, artifactory_repo, profile) {
                     stage("Get dependencies and create app") {
                         String arguments = "--profile ${profile} --lockfile=${lockfile}"
                         client.run(command: "graph lock . ${arguments}".toString())
-                        client.run(command: "create . sword/sorcery ${arguments}".toString())
+                        client.run(command: "create . ${user_channel} ${arguments}".toString())
                         sh "cat ${lockfile}"
                     }
 
@@ -60,15 +68,10 @@ def get_stages(id, docker_image, artifactory_name, artifactory_repo, profile) {
     }
 }
 
-def artifactory_name = "Artifactory Docker"
-def artifactory_repo = "conan-local"
-def docker_runs = [:]  // [id] = [docker_image, profile]
-docker_runs["conanio-gcc8"] = ["conanio/gcc8", "conanio-gcc8"]
-docker_runs["conanio-gcc7"] = ["conanio/gcc7", "conanio-gcc7"]
 
 def stages = [:]
 docker_runs.each { id, values ->
-    stages[id] = get_stages(id, values[0], artifactory_name, artifactory_repo, values[1])
+    stages[id] = get_stages(id, values[0], artifactory_name, artifactory_repo, values[1], user_channel)
 }
 
 
@@ -101,7 +104,52 @@ node {
                 // Publish build info
                 String publish_command = "python publish_buildinfo.py --remote=${artifactory_credentials} ${buildInfoFilename}"
                 sh publish_command
+            }
+        }
 
+        stage("Launch job-graph") {
+            docker.image("conanio/gcc8").inside("--net=docker_jenkins_artifactory") {
+                stage("Get project") {
+                    checkout scm
+                }
+
+                stage("Configure Conan client") {
+                    sh "conan config install -sf conan/config https://github.com/sword-and-sorcery/sword-and-sorcery.git"
+                }
+
+                stage("Trigger dependents jobs") {
+                    // Get the information about the package (ref + rrev)
+                    name = sh (script: "conan inspect . --raw name", returnStdout: true).trim()
+                    version = sh (script: "conan inspect . --raw version", returnStdout: true).trim()
+                    sh "conan export . ${user_channel}"
+                    
+                    def search_output = "search_output.json"
+                    sh "conan search ${name}/${version}@${user_channel} --revisions --raw --json=${search_output}"
+                    def props = readJSON file: search_output
+                    def revision = props[0]['revision']
+                    def reference = "${name}/${version}@${user_channel}#${revision}"
+                    echo "Full reference: '${reference}'"
+
+                    // Trigger dependents jobs
+                    def organization = "sword-and-sorcery"
+                    def repository = "core-messages"
+                    def sha1 = checkout(scm).GIT_COMMIT
+
+                    def projects = ["ui-board-imgui/0.0@${user_channel}", "core-communications/0.0@${user_channel}"]  // TODO: Get list dinamically
+                    projects.each {project_id -> 
+                        def json = """{"parameter": [{"name": "reference", "value": "${reference}"}, \
+                                                {"name": "project_id", "value": "${project_id}"}, \
+                                                {"name": "organization", "value": "${organization}"}, \
+                                                {"name": "repository", "value": "${repository}"}, \
+                                                {"name": "sha1", "value": "${sha1}"} \
+                                                ]}"""
+                        withCredentials([usernamePassword(credentialsId: 'job-graph', passwordVariable: 'pass', usernameVariable: 'user')]) {
+                            // TODO: FIXME: user pass from credentials
+                            def url = "http://admin:1180edb4037ce3fb2dae7260d2cf4ddcb2@jenkins:8080/job/test_project/build"
+                            sh "curl -v POST ${url} --data-urlencode json='${json}'"
+                        }                            
+                    }
+                }
             }
         }
     }
