@@ -9,52 +9,47 @@ def get_stages(id, docker_image, artifactory_name, artifactory_repo, profile) {
                 def lockfile = "${id}.lock"
 
                 try {
-                    //client.run(command: "config install -sf conan/config https://github.com/sword-and-sorcery/sword-and-sorcery.git")
-                    //client.run(command: "config install -sf hooks -tf hooks https://github.com/conan-io/hooks.git")
-                    //client.remote.add server: server, repo: artifactory_repo, remoteName: remoteName, force: true
+                    client.run(command: "config install -sf conan/config https://github.com/sword-and-sorcery/sword-and-sorcery.git")
+                    client.run(command: "config install -sf hooks -tf hooks https://github.com/conan-io/hooks.git")
+                    client.remote.add server: server, repo: artifactory_repo, remoteName: remoteName, force: true
 
                     stage("${id}") {
                         echo 'Running in ${docker_image}'
                     }
 
-                    //stage("Get project") {
-                    //    checkout scm
-                    //}
-
-                    //stage("Get dependencies and create app") {
-                    //    String arguments = "--profile ${profile} --lockfile=${lockfile}"
-                    //    client.run(command: "graph lock . ${arguments}".toString())
-                    //    client.run(command: "create . sword/sorcery ${arguments}".toString())
-                    //    sh "cat ${lockfile}"
-                    //}
-
-                    stage("test download") {
-                        client.run(command: "install zlib/1.2.11@")
-                        client.run(command: "upload * --all -r ${remoteName} --confirm".toString())
+                    stage("Get project") {
+                        checkout scm
                     }
 
-                    //stage("Upload packages") {
-                    //    String uploadCommand = "upload core-messages* --all -r ${remoteName} --confirm"
-                    //    client.run(command: uploadCommand)
-                    //}
+                    stage("Get dependencies and create app") {
+                        String arguments = "--profile ${profile} --lockfile=${lockfile}"
+                        client.run(command: "graph lock . ${arguments}".toString())
+                        client.run(command: "create . sword/sorcery ${arguments}".toString())
+                        sh "cat ${lockfile}"
+                    }
 
-                    //stage("Compute build info") {
-                    //    def buildInfo = Artifactory.newBuildInfo()
-                    //    String artifactory_credentials = "http://artifactory:8081/artifactory,admin,password"
-                    //    def buildInfoFilename = "${id}.json"
+                    stage("Upload packages") {
+                        String uploadCommand = "upload core-messages* --all -r ${remoteName} --confirm"
+                        client.run(command: uploadCommand)
+                    }
+
+                    stage("Compute build info") {
+                        def buildInfo = Artifactory.newBuildInfo()
+                        String artifactory_credentials = "http://artifactory:8081/artifactory,admin,password"
+                        def buildInfoFilename = "${id}.json"
 
                         // Install helper script (WIP)
-                    //    git url: 'https://gist.github.com/a39acad525fd3e7e5315b2fa0bc70b6f.git'
-                    //    sh 'pip install rtpy'
+                        git url: 'https://gist.github.com/a39acad525fd3e7e5315b2fa0bc70b6f.git'
+                        sh 'pip install rtpy'
 
-                    //    String python_command = "python lockfile_buildinfo.py --remotes=${artifactory_credentials}"
-                    //    python_command += " --build-number=${buildInfo.getNumber()} --build-name=\"${buildInfo.getName()}\""
-                    //    python_command += " --multi-module"
-                    //    python_command += " --output-file=${buildInfoFilename} ${lockfile}"
-                    //    sh python_command
+                        String python_command = "python lockfile_buildinfo.py --remotes=${artifactory_credentials}"
+                        python_command += " --build-number=${buildInfo.getNumber()} --build-name=\"${buildInfo.getName()}\""
+                        python_command += " --multi-module"
+                        python_command += " --output-file=${buildInfoFilename} ${lockfile}"
+                        sh python_command
 
-                    //    echo "Stash '${id}' -> '${buildInfoFilename}'"
-                    //    stash name: id, includes: "${buildInfoFilename}"
+                        echo "Stash '${id}' -> '${buildInfoFilename}'"
+                        stash name: id, includes: "${buildInfoFilename}"
                     }
                 }
                 finally {
