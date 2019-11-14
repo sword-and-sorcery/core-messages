@@ -27,7 +27,7 @@ class CoreMessages(ConanFile):
         self.requires("protobuf/3.9.1@bincrafters/stable")
 
     def build_requirements(self):
-        self.build_requires("protoc_installer/3.6.1@bincrafters/stable")
+        self.build_requires("protoc_installer/3.9.1@bincrafters/stable")
 
     def source(self):
         # Generate protobuf messages
